@@ -3,6 +3,7 @@ const int yellow = 2; // led connected to pin 2.
 const int white = 3;  // led connected to pin 3.
 const int green = 4;  // led connected to pin 4.
 const int blue = 5;  // led connected to pin 5.
+const int orange = 7;  // led connected to pin 7.
 const int killSwitch = 6; //+ wire of on/off switch to pin 6.
 const int rightPiezo = A10;  // right piezo on analog pin 24(A10)
 const int leftPiezo = A11;  // left piezo on analog pin 25(A11)
@@ -23,6 +24,7 @@ void setup() {
   pinMode(white, OUTPUT);
   pinMode(green, OUTPUT);
   pinMode(blue, OUTPUT);
+  pinMode(orange, OUTPUT);
 }
 void loop () 
 
@@ -55,16 +57,18 @@ void loop ()
   long patternPulseTime = 200; // .2 seconds
   // run pattern 1
   if (shouldRunPattern1) {
-    // green and blue on
+    // green, blue, orange on
     if (pattern1Duration < patternPulseTime) {
       digitalWrite(green, HIGH);
       digitalWrite(blue, HIGH);
+      digitalWrite(orange, HIGH);
     } 
     
-    // green and blue off for second half second
+    // green, blue, ornge off for second half second
     else {
       digitalWrite(green, LOW);
       digitalWrite(blue, LOW);
+      digitalWrite(orange, LOG);
       shouldRunPattern1 = false;
     } 
   }
