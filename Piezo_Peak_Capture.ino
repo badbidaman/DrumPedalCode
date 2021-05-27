@@ -40,5 +40,15 @@ void loop() {
       state = 0; // go back to idle after 30 ms below threshold
     }
   }
+  float volume = 0.0;
   
+  if (piezo < 10) {
+    volume = 0.0;
+  } else if (piezo <= 320) {
+    volume = 0.4; 
+  } else if (piezo <= 700) {
+    volume = 0.7; 
+  } else {
+    volume = 1.0; 
+  } 
 }
