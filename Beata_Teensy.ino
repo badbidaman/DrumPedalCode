@@ -4,21 +4,33 @@
 #include <SD.h>
 #include <SerialFlash.h>
 
-/*This initial setup is important because I have added 2 mixers. 
-This means that playSdWav1 and playSDWav2 can be played at the same time*/
+/*This initial setup is important because I have added 2 mixers.
+  This means that playSdWav1 and playSDWav2 can be played at the same time*/
 
-AudioPlaySdWav           playSdWav1 = rightPiezoSound;     
-AudioPlaySdWav           playSdWav2 = leftPiezoSound;     
-AudioMixer4              mixer1;         
-AudioMixer4              mixer2;         
-AudioOutputI2S           i2s1;           
+AudioPlaySdWav           playSdWav1;
+AudioPlaySdWav           playSdWav2;
+AudioMixer4              mixer1;
+AudioMixer4              mixer2;
+AudioOutputI2S           i2s1;
 AudioConnection          patchCord1(playSdWav1, 0, mixer1, 0);
 AudioConnection          patchCord2(playSdWav1, 1, mixer2, 0);
 AudioConnection          patchCord3(playSdWav2, 0, mixer1, 1);
 AudioConnection          patchCord4(playSdWav2, 1, mixer2, 1);
 AudioConnection          patchCord5(mixer1, 0, i2s1, 0);
 AudioConnection          patchCord6(mixer2, 0, i2s1, 1);
-AudioControlSGTL5000     sgtl5000_1;     
+AudioControlSGTL5000     sgtl5000_1;
+
+
+
+#define SDCARD_CS_PIN    BUILTIN_SDCARD
+#define SDCARD_MOSI_PIN  7
+#define SDCARD_SCK_PIN   14
+
+
+
+
+//const String rightPiezoSound = "RKIT.WAV";
+//const String leftPiezoSound = "LKIT.WAV";
 
 // lights
 const int yellow = 2;  // led connected to pin 2.
@@ -42,11 +54,20 @@ bool shouldPlaySound2 = false;
 long pattern1Start = 0;
 long pattern2Start = 0;
 
-const String rightPiezoSound = "RKIT.WAV";
-const String leftPiezoSound = "LKIT.WAV";
-
 
 void setup() {
+  AudioMemory(20);
+  sgtl5000_1.enable();
+
+  void playFile (const char *filename)
+  { playSDWav1.play(filename);
+  }
+
+  void playFile (const char *filename)
+  {
+    playSDWav2.play(filename);
+  }
+
   pinMode(yellow, OUTPUT);
   pinMode(white, OUTPUT);
   pinMode(green, OUTPUT);
@@ -54,29 +75,39 @@ void setup() {
 
 }
 
-void loop() {
-  
-  /* volume control, #s are somewhat subjective, 
-  will need adjusting once pedal is built*/
-  float volume = 0.0;
-  if (piezo < 10) {
-    volume = 0.0;
-  } else if (piezo <= 320) {
-    volume = 0.4; 
-  } else if (piezo <= 700) {
-    volume = 0.7; 
-  } else {
-    volume = 1.0; 
-  } 
-}
 
-/*if (digitalRead(killSwitch) == LOW) {
-    return; } */
+void loop() {
+
+  /*if (digitalRead(killSwitch) == LOW) {
+      return; } */
 
   // read sensors and set variables
   rightsensorReading = analogRead(rightPiezo);
   leftsensorReading = analogRead(leftPiezo);
-  
+
+  /* volume control, #s are somewhat subjective,
+    will need adjusting once pedal is built*/
+  float volume = 0.0;
+  if (rightPiezo < 10) {
+    volume = 0.0;
+  } else if (rightPiezo <= 320) {
+    volume = 0.4;
+  } else if (rightPiezo <= 700) {
+    volume = 0.7;
+  } else {
+    volume = 1.0;
+  }
+
+  if (leftPiezo < 10) {
+    volume = 0.0;
+  } else if (leftPiezo <= 320) {
+    volume = 0.4;
+  } else if (leftPiezo <= 700) {
+    volume = 0.7;
+  } else {
+    volume = 1.0;
+  }
+
   // initialize the pattern1
   if (rightsensorReading >= threshold) {
     shouldRunPattern1 = true;
@@ -121,15 +152,9 @@ void loop() {
     }
   }
   if (shouldPlaySound1) {
-    DF1201S.playSpecFile(rightPiezoSound);
-    Serial.print("Playing right sound: ");
-    Serial.println(DF1201S.getFileName());
-    shouldPlaySound1 = false;
+    playSDWav1;
   }
   if (shouldPlaySound2) {
-    DF1201S.playSpecFile(leftPiezoSound);
-    Serial.print("Playing left sound: ");
-    Serial.println(DF1201S.getFileName());
-    shouldPlaySound2 = false;
+    playSDWav2;
   }
 }
