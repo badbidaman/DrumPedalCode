@@ -5,7 +5,7 @@
 #include <SerialFlash.h>
 
 /*This initial setup is important because I have added 2 mixers.
-  This means that playSdWav1 and playSDWav2 can be played at the same time*/
+  This means that playSdWav1 and playSdWav2 can be played at the same time*/
 
 AudioPlaySdWav           playSdWav1;
 AudioPlaySdWav           playSdWav2;
