@@ -11,26 +11,19 @@ AudioPlaySdWav           playSdWav1;
 AudioPlaySdWav           playSdWav2;
 AudioMixer4              mixer1;
 AudioMixer4              mixer2;
-AudioOutputI2S           i2s1;
+AudioOutputI2S           audioOutput;
 AudioConnection          patchCord1(playSdWav1, 0, mixer1, 0);
 AudioConnection          patchCord2(playSdWav1, 1, mixer2, 0);
 AudioConnection          patchCord3(playSdWav2, 0, mixer1, 1);
 AudioConnection          patchCord4(playSdWav2, 1, mixer2, 1);
-AudioConnection          patchCord5(mixer1, 0, i2s1, 0);
-AudioConnection          patchCord6(mixer2, 0, i2s1, 1);
+AudioConnection          patchCord5(mixer1, 0, audioOutput, 0);
+AudioConnection          patchCord6(mixer2, 0, audioOutput, 1);
 AudioControlSGTL5000     sgtl5000_1;
-
-
 
 #define SDCARD_CS_PIN    BUILTIN_SDCARD
 #define SDCARD_MOSI_PIN  7
 #define SDCARD_SCK_PIN   14
 
-
-
-
-//const String rightPiezoSound = "RKIT.WAV";
-//const String leftPiezoSound = "LKIT.WAV";
 
 // lights
 const int yellow = 2;  // led connected to pin 2.
@@ -38,8 +31,10 @@ const int white = 3;   // led connected to pin 3.
 const int green = 4;   // led connected to pin 4.
 const int blue = 5;    // led connected to pin 5.
 const int killSwitch = 6;
-const int rightPiezo = A1;  // right piezo on analog pin 1
-const int leftPiezo = A2;   // left piezo on analog pin 2
+
+const int rightPiezo = A0;  // right piezo on analog pin 1
+const int leftPiezo = A1;   // left piezo on analog pin 2
+
 int rightsensorReading = 0;
 int leftsensorReading = 0;
 int ledState = LOW;
@@ -51,30 +46,29 @@ bool shouldRunPattern2 = true;
 
 bool shouldPlaySound1 = false;
 bool shouldPlaySound2 = false;
+
 long pattern1Start = 0;
 long pattern2Start = 0;
-
 
 void setup() {
   AudioMemory(20);
   sgtl5000_1.enable();
+  sgtl5000_1.volume(0.5);
 
-  void playFile (const char *filename)
-  { playSDWav1.play(filename);
+  if (shouldPlaySound1) {
+    playSdWav1.play("RKIT.WAV");
+    shouldPlaySound1 = false;
   }
-
-  void playFile (const char *filename)
-  {
-    playSDWav2.play(filename);
-  }
-
+  if (shouldPlaySound2) {
+    playSdWav2.play("LKIT.WAV");
+    shouldPlaySound2 = false;
+    }
+ 
   pinMode(yellow, OUTPUT);
   pinMode(white, OUTPUT);
   pinMode(green, OUTPUT);
   pinMode(blue, OUTPUT);
-
 }
-
 
 void loop() {
 
@@ -88,21 +82,21 @@ void loop() {
   /* volume control, #s are somewhat subjective,
     will need adjusting once pedal is built*/
   float volume = 0.0;
-  if (rightPiezo < 10) {
+  if (rightPiezo < 5) {
     volume = 0.0;
-  } else if (rightPiezo <= 320) {
+  } else if (rightPiezo <= 10) {
     volume = 0.4;
-  } else if (rightPiezo <= 700) {
+  } else if (rightPiezo <= 22) {
     volume = 0.7;
   } else {
     volume = 1.0;
   }
 
-  if (leftPiezo < 10) {
+  if (leftPiezo < 5) {
     volume = 0.0;
-  } else if (leftPiezo <= 320) {
+  } else if (leftPiezo <= 10) {
     volume = 0.4;
-  } else if (leftPiezo <= 700) {
+  } else if (leftPiezo <= 22) {
     volume = 0.7;
   } else {
     volume = 1.0;
@@ -150,11 +144,5 @@ void loop() {
       digitalWrite(white, LOW);
       shouldRunPattern2 = false;
     }
-  }
-  if (shouldPlaySound1) {
-    playSDWav1;
-  }
-  if (shouldPlaySound2) {
-    playSDWav2;
   }
 }
