@@ -24,7 +24,6 @@ AudioControlSGTL5000     sgtl5000_1;
 #define SDCARD_MOSI_PIN  7
 #define SDCARD_SCK_PIN   14
 
-
 // lights
 const int yellow = 2;  // led connected to pin 2.
 const int white = 3;   // led connected to pin 3.
@@ -32,14 +31,14 @@ const int green = 4;   // led connected to pin 4.
 const int blue = 5;    // led connected to pin 5.
 const int killSwitch = 6;
 
-const int rightPiezo = A0;  // right piezo on analog pin 1
-const int leftPiezo = A1;   // left piezo on analog pin 2
+const int rightPiezo = A10;  // right piezo on analog pin 24(A10)
+const int leftPiezo = A11;   // left piezo on analog pin 25(A11)
 
 int rightsensorReading = 0;
 int leftsensorReading = 0;
 int ledState = LOW;
 
-const int threshold = 10;  /*do we need this if we're using the Peak capture method? */
+const int threshold = 30;  /*do we need this if we're using the Peak capture method? */
 
 bool shouldRunPattern1 = true;
 bool shouldRunPattern2 = true;
@@ -53,50 +52,59 @@ long pattern2Start = 0;
 void setup() {
   AudioMemory(20);
   sgtl5000_1.enable();
-  sgtl5000_1.volume(0.5);
-
-  if (shouldPlaySound1) {
-    playSdWav1.play("RKIT.WAV");
-    shouldPlaySound1 = false;
-  }
-  if (shouldPlaySound2) {
-    playSdWav2.play("LKIT.WAV");
-    shouldPlaySound2 = false;
-    }
+ // sgtl5000_1.volume(0.5);
  
   pinMode(yellow, OUTPUT);
   pinMode(white, OUTPUT);
   pinMode(green, OUTPUT);
   pinMode(blue, OUTPUT);
+
 }
 
 void loop() {
 
   /*if (digitalRead(killSwitch) == LOW) {
       return; } */
-
+  if (shouldPlaySound1) {
+     Serial.println("Starting Sound1 Play");
+    playSdWav1.play("RKIT.WAV");
+    delay(2000);
+    shouldPlaySound1 = false;
+  }
+  if (shouldPlaySound2) {
+     Serial.println("Starting Sound2 Play");
+    playSdWav2.play("LKIT.WAV");
+   delay(2000);
+    shouldPlaySound2 = false;
+    }
+    
   // read sensors and set variables
   rightsensorReading = analogRead(rightPiezo);
   leftsensorReading = analogRead(leftPiezo);
+  Serial.print("rightsensorReading = ");
+  Serial.print(rightsensorReading);
+  Serial.print("leftsensorReading = ");
+  Serial.print(leftsensorReading);
+  Serial.println();
 
   /* volume control, #s are somewhat subjective,
     will need adjusting once pedal is built*/
-  float volume = 0.0;
-  if (rightPiezo < 5) {
+  float volume = 0.5;
+  if (rightPiezo < 15) {
     volume = 0.0;
-  } else if (rightPiezo <= 10) {
+  } else if (rightPiezo <= 20) {
     volume = 0.4;
-  } else if (rightPiezo <= 22) {
+  } else if (rightPiezo <= 25) {
     volume = 0.7;
   } else {
     volume = 1.0;
   }
 
-  if (leftPiezo < 5) {
+  if (leftPiezo < 15) {
     volume = 0.0;
-  } else if (leftPiezo <= 10) {
+  } else if (leftPiezo <= 20) {
     volume = 0.4;
-  } else if (leftPiezo <= 22) {
+  } else if (leftPiezo <= 25) {
     volume = 0.7;
   } else {
     volume = 1.0;
