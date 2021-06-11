@@ -4,21 +4,25 @@
 #include <SD.h>
 #include <SerialFlash.h>
 
-/*This initial setup is important because I have added 2 mixers. 
-This means that playSdWav1 and playSDWav2 can be played at the same time*/
+/*This initial setup is important because I have added 2 mixers.
+  This means that playSdWav1 and playSdWav2 can be played at the same time*/
 
-AudioPlaySdWav           playSdWav1 = rightPiezoSound;     
-AudioPlaySdWav           playSdWav2 = leftPiezoSound;     
-AudioMixer4              mixer1;         
-AudioMixer4              mixer2;         
-AudioOutputI2S           i2s1;           
+AudioPlaySdWav           playSdWav1;
+AudioPlaySdWav           playSdWav2;
+AudioMixer4              mixer1;
+AudioMixer4              mixer2;
+AudioOutputI2S           audioOutput;
 AudioConnection          patchCord1(playSdWav1, 0, mixer1, 0);
 AudioConnection          patchCord2(playSdWav1, 1, mixer2, 0);
 AudioConnection          patchCord3(playSdWav2, 0, mixer1, 1);
 AudioConnection          patchCord4(playSdWav2, 1, mixer2, 1);
-AudioConnection          patchCord5(mixer1, 0, i2s1, 0);
-AudioConnection          patchCord6(mixer2, 0, i2s1, 1);
-AudioControlSGTL5000     sgtl5000_1;     
+AudioConnection          patchCord5(mixer1, 0, audioOutput, 0);
+AudioConnection          patchCord6(mixer2, 0, audioOutput, 1);
+AudioControlSGTL5000     sgtl5000_1;
+
+#define SDCARD_CS_PIN    BUILTIN_SDCARD
+#define SDCARD_MOSI_PIN  7
+#define SDCARD_SCK_PIN   14
 
 // lights
 const int yellow = 2;  // led connected to pin 2.
@@ -26,27 +30,30 @@ const int white = 3;   // led connected to pin 3.
 const int green = 4;   // led connected to pin 4.
 const int blue = 5;    // led connected to pin 5.
 const int killSwitch = 6;
-const int rightPiezo = A1;  // right piezo on analog pin 1
-const int leftPiezo = A2;   // left piezo on analog pin 2
+
+const int rightPiezo = A10;  // right piezo on analog pin 24(A10)
+const int leftPiezo = A11;   // left piezo on analog pin 25(A11)
+
 int rightsensorReading = 0;
 int leftsensorReading = 0;
 int ledState = LOW;
 
-const int threshold = 10;  /*do we need this if we're using the Peak capture method? */
+const int threshold = 30;  /*do we need this if we're using the Peak capture method? */
 
 bool shouldRunPattern1 = true;
 bool shouldRunPattern2 = true;
 
 bool shouldPlaySound1 = false;
 bool shouldPlaySound2 = false;
+
 long pattern1Start = 0;
 long pattern2Start = 0;
 
-const String rightPiezoSound = "RKIT.WAV";
-const String leftPiezoSound = "LKIT.WAV";
-
-
 void setup() {
+  AudioMemory(20);
+  sgtl5000_1.enable();
+ // sgtl5000_1.volume(0.5);
+ 
   pinMode(yellow, OUTPUT);
   pinMode(white, OUTPUT);
   pinMode(green, OUTPUT);
@@ -55,28 +62,54 @@ void setup() {
 }
 
 void loop() {
-  
-  /* volume control, #s are somewhat subjective, 
-  will need adjusting once pedal is built*/
-  float volume = 0.0;
-  if (piezo < 10) {
-    volume = 0.0;
-  } else if (piezo <= 320) {
-    volume = 0.4; 
-  } else if (piezo <= 700) {
-    volume = 0.7; 
-  } else {
-    volume = 1.0; 
-  } 
-}
 
-/*if (digitalRead(killSwitch) == LOW) {
-    return; } */
-
+  /*if (digitalRead(killSwitch) == LOW) {
+      return; } */
+  if (shouldPlaySound1) {
+     Serial.println("Starting Sound1 Play");
+    playSdWav1.play("RKIT.WAV");
+    delay(2000);
+    shouldPlaySound1 = false;
+  }
+  if (shouldPlaySound2) {
+     Serial.println("Starting Sound2 Play");
+    playSdWav2.play("LKIT.WAV");
+   delay(2000);
+    shouldPlaySound2 = false;
+    }
+    
   // read sensors and set variables
   rightsensorReading = analogRead(rightPiezo);
   leftsensorReading = analogRead(leftPiezo);
-  
+  Serial.print("rightsensorReading = ");
+  Serial.print(rightsensorReading);
+  Serial.print("leftsensorReading = ");
+  Serial.print(leftsensorReading);
+  Serial.println();
+
+  /* volume control, #s are somewhat subjective,
+    will need adjusting once pedal is built*/
+  float volume = 0.5;
+  if (rightPiezo < 15) {
+    volume = 0.0;
+  } else if (rightPiezo <= 20) {
+    volume = 0.4;
+  } else if (rightPiezo <= 25) {
+    volume = 0.7;
+  } else {
+    volume = 1.0;
+  }
+
+  if (leftPiezo < 15) {
+    volume = 0.0;
+  } else if (leftPiezo <= 20) {
+    volume = 0.4;
+  } else if (leftPiezo <= 25) {
+    volume = 0.7;
+  } else {
+    volume = 1.0;
+  }
+
   // initialize the pattern1
   if (rightsensorReading >= threshold) {
     shouldRunPattern1 = true;
@@ -119,17 +152,5 @@ void loop() {
       digitalWrite(white, LOW);
       shouldRunPattern2 = false;
     }
-  }
-  if (shouldPlaySound1) {
-    DF1201S.playSpecFile(rightPiezoSound);
-    Serial.print("Playing right sound: ");
-    Serial.println(DF1201S.getFileName());
-    shouldPlaySound1 = false;
-  }
-  if (shouldPlaySound2) {
-    DF1201S.playSpecFile(leftPiezoSound);
-    Serial.print("Playing left sound: ");
-    Serial.println(DF1201S.getFileName());
-    shouldPlaySound2 = false;
   }
 }
